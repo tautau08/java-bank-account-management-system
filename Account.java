@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Account {
+public class Account implements iAccount {
     private String name;
     private String uuid;
     private User holder;

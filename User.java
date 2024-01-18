@@ -1,161 +1,89 @@
 package ATMBankManager;
 
-import java.util.ArrayList;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
-public class User {
-    // User's bank account details.
+public class User implements iuser {
     private String firstName;
     private String lastName;
-    private String uuid; // ID.
-    private byte pinHash[]; // Stored Pin code, in a byte Array called pinHash (empty). Will be stored hashed in MD5.
-    
-    // An array with a layer that adds easy list-like functions, or easier in adding new elements etc. Instead of Array.
-    private ArrayList<Account> accounts; // List of user's accounts. ArrayList (imported).
+    private String uuid;
+    private byte[] pinHash;
+    private ArrayList<Account> accounts;
 
-    /**
-     * 
-     * @param firstName
-     * @param lastName
-     * @param pin
-     * @param theBank
-     */
-    // @param firstName, @param lastName, @param pin, @param theBank.
     public User(String firstName, String lastName, String pin, Bank theBank) {
-
-        // Set user's name.
         this.firstName = firstName;
         this.lastName = lastName;
 
-        // Store the original pin as MD5 hash. A Try Catch, to catch any errors in an unrecognised getInstance argument string, (if "MD5" was invalid, it would throw the error).
-        try {
-            // pinHash is a byte array. Use digest function ' getBytes()', from our md MessageDigest hashing object, and use on user's pin, to get the memeory/bytes of the pin object to digest the bytes through our MD5 algorith, to return pin hash bytes. In short, we are taking pin string and returning a MD5 hashed value.
+        // Extracted pin hashing to a method for better organization and reusability.
+        this.pinHash = hashPin(pin);
 
-            MessageDigest md = MessageDigest.getInstance("MD5"); // MD5 Hashing algorithm.
-            this.pinHash = md.digest(pin.getBytes()); // Pass pin through algo, to hash.
-            
-        } catch (NoSuchAlgorithmException e) {
-            
-            System.err.println("error: caught NoSuchAlgorithmException");
-            e.printStackTrace(); //
-            System.exit(1); // Exit app.
-        }
-
-        // Generate a new uuid for user.
         this.uuid = theBank.getNewUserUUID();
+        this.accounts = new ArrayList<>();
 
-        // Create empty list of accounts. ArrayList constructor.
-        this.accounts = new ArrayList<Account>();
-
-        // Print log message.
-        System.out.printf("New user %s, %s with ID %s created.\n", lastName, firstName, this.uuid); // Print user information.
+        // Logging can be extracted to a separate logging service for better separation of concerns.
+        System.out.printf("New user %s, %s with ID %s created.\n", lastName, firstName, this.uuid);
     }
 
-    /**
-     * 
-     * @param anAcct
-     */
-    // "void" keyword signifies no return values. Encapsulation - this public encapsulated (self-contained) method allows an account to be added to the private ArrayList 'accounts', form an outside class (using this method). There are two of these public methods for each list, which are mirrors (a user's list and bank's list).
-    // @param anAcct (the account to add to User's list).
+    // Extracted pin hashing logic to a private method.
+    private byte[] hashPin(String pin) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            return md.digest(pin.getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            handleNoSuchAlgorithmException(e);
+        }
+        return new byte[0];
+    }
+
+    private void handleNoSuchAlgorithmException(NoSuchAlgorithmException e) {
+        System.err.println("error: caught NoSuchAlgorithmException");
+        e.printStackTrace();
+        System.exit(1);
+    }
+
     public void addAccount(Account anAcct) {
         this.accounts.add(anAcct);
     }
 
-    /**
-     * 
-     * @return
-     */
-    // "String" is returned. @return uuid (user's uuid). Public method made available, to get access to a Private value.
     public String getUUID() {
         return this.uuid;
     }
 
-    /**
-     * 
-     * @param aPin
-     * @return
-     */
-    // Check whether given pin matches the particular User's pin. @param aPin (inputted pin to check). @return boolean (whether pin is valid or not).
     public boolean validatePin(String aPin) {
-        try {
-            // pinHash is a byte array. Use digest function ' getBytes()', from our md MessageDigest hashing object, and use on user's pin, to get the memeory/bytes of the pin object to digest the bytes through our MD5 algorith, to return pin hash bytes. In short, we are taking pin string and returning a MD5 hashed value.
-
-            MessageDigest md = MessageDigest.getInstance("MD5"); // MD5 Hashing algorithm.
-            return MessageDigest.isEqual(md.digest(aPin.getBytes()), this.pinHash); // Static method 'isDigest()', to return a boolean value, after comparing this inputted pin (hashed) with our targetted User's pin. True if a matching hash is found, else false.
-
-        } catch (NoSuchAlgorithmException e) {
-
-            System.err.println("error: caught NoSuchAlgorithmException");
-            e.printStackTrace(); //
-            System.exit(1); // Exit app.
-        }
-        return false; // If somehow the execution stream gets here, by getInstance error catch, then we still need to return a boolean value, so we dont get a Java error.
+        byte[] inputPinHash = hashPin(aPin);
+        return MessageDigest.isEqual(inputPinHash, this.pinHash);
     }
 
-    /**
-     * 
-     * @return firstName (the user's first name)
-     */
-    // Method to access private firstName, to return the User's firstName.
     public String getFirstName() {
         return this.firstName;
     }
 
-    // Print summaries for the accounts of the user.
+    // Consider using a StringBuilder for building the summary for better performance.
     public void printAccountsSummary() {
-        System.out.printf("\n\n%s's accounts summary\n", this.firstName);
+        StringBuilder summary = new StringBuilder("\n\n" + this.firstName + "'s accounts summary\n");
         for (int i = 0; i < this.accounts.size(); i++) {
-            System.out.printf(" %d) %s\n", i+1, this.accounts.get(i).getSummaryLine()); // "%d" Wildcard for integers. "%s" Wildcard for strings.
+            summary.append(String.format(" %d) %s\n", i + 1, this.accounts.get(i).getSummaryLine()));
         }
-        System.out.println();
+        System.out.println(summary.toString());
     }
 
-    /**
-     * 
-     * @return
-     */
-    // Get and return number of accounts User has.
     public int numAccounts() {
         return this.accounts.size();
     }
 
-    /**
-     * 
-     * @param acctIdx
-     */
-    // Print the Transaction history for a particular Account.
     public void printAcctTransHistory(int acctIdx) {
         this.accounts.get(acctIdx).printAcctTransHistory();
     }
 
-    /**
-     * 
-     * @param acctIdx
-     * @return
-     */
-    // Get the balance of a particular account.
     public double getAcctBalance(int acctIdx) {
         return this.accounts.get(acctIdx).getBalance();
     }
 
-    /**
-     * 
-     * @param acctIdx
-     * @return
-     */
-    // Get the UUID of a particular Account.
     public String getAcctUUID(int acctIdx) {
         return this.accounts.get(acctIdx).getUUID();
     }
 
-    /**
-     * 
-     * @param acctIdx
-     * @param amount
-     * @param memo
-     */
-    // Add a Transaction to a particular Account
     public void addAcctTransaction(int acctIdx, double amount, String memo) {
         this.accounts.get(acctIdx).addTransaction(amount, memo);
     }
