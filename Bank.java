@@ -87,13 +87,12 @@ public class Bank implements iBank{
 
     }
 
-    // "void" keyword signifies no return values. Encapsulation - this public encapsulated (self-contained) method allows an account to be added to the private ArrayList 'accounts', form an outside class (using this method). There are two of these public methods for each list, which are mirrors (a user's list and bank's list).
-    // Adds account to accounts list. @param anAcct (the account to add to Bank's list).
+
     public void addAccount(Account anAcct) {
         this.accounts.add(anAcct);
     }
 
-    // "User" indicates a returned value of type 'User'. Create a new user, and add to users list. @param firstName (user's first name), @param lastName (user's last name), @param pin (user's pin code). @return (the new User, as an object).
+
     public User addUser(String firstName, String lastName, String pin) {
         User newUser = new User(firstName, lastName, pin, this); // 'this' is the Bank object.
         this.users.add(newUser);
